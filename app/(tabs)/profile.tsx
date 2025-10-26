@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User as UserIcon, Target, Activity, Heart, Settings, ChevronRight } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
 import { useUser } from '@/contexts/UserContext';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, favoritePeptides, activeCycles } = useUser();
 
   const goalLabels: Record<string, string> = {
@@ -19,7 +21,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsButton}>
+        <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settings' as any)}>
           <Settings size={20} color={Colors.light.primary} />
         </TouchableOpacity>
       </View>

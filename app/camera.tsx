@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { X, Camera as CameraIcon, FlipHorizontal, Check, HelpCircle } from 'lucide-react-native';
+import { X, Camera as CameraIcon, FlipHorizontal, Check, HelpCircle, Sparkles } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
 import { useUser } from '@/contexts/UserContext';
 import { ProgressPhoto } from '@/constants/types';
+import { PEPTIDES } from '@/constants/peptides';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function CameraScreen() {
   const [notes, setNotes] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rating, setRating] = useState<ProgressPhoto['rating']>();
+  const [recommendations, setRecommendations] = useState<string[]>([]);
   const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
@@ -85,6 +87,9 @@ export default function CameraScreen() {
         });
       });
 
+      const goalsText = user.goals.join(', ');
+      const peptidesList = PEPTIDES.map(p => `- ${p.name}: ${p.shortDescription} (Goals: ${p.goals.join(', ')})`).join('\n');
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -105,8 +110,14 @@ export default function CameraScreen() {
 2. Debloatedness (minimal water retention, defined features)
 3. Clear Skin (skin quality and clarity)
 4. Jawline (facial structure definition)
+5. Muscle Symmetry (balanced development)
 
 Provide an overall rating (1-10) and a brief analysis (2-3 sentences).
+
+User's Goals: ${goalsText}
+
+Based on the analysis and user's goals, recommend 2-3 relevant peptides from this list:
+${peptidesList}
 
 Return your response in the following JSON format:
 {
@@ -114,8 +125,10 @@ Return your response in the following JSON format:
   "debloatedness": <number>,
   "clearSkin": <number>,
   "jawline": <number>,
+  "muscleSymmetry": <number>,
   "overall": <number>,
-  "analysis": "<string>"
+  "analysis": "<string>",
+  "recommendations": ["peptide_name1", "peptide_name2"]
 }`
                 },
                 {
@@ -127,7 +140,7 @@ Return your response in the following JSON format:
               ]
             }
           ],
-          max_tokens: 500
+          max_tokens: 1000
         })
       });
 
@@ -137,6 +150,9 @@ Return your response in the following JSON format:
         if (jsonMatch) {
           const analysisResult = JSON.parse(jsonMatch[0]);
           setRating(analysisResult);
+          if (analysisResult.recommendations) {
+            setRecommendations(analysisResult.recommendations);
+          }
         }
       }
     } catch (error) {
@@ -254,6 +270,12 @@ Return your response in the following JSON format:
                       <Text style={styles.ratingLabel}>Jawline</Text>
                       <Text style={styles.ratingValue}>{rating.jawline}/10</Text>
                     </View>
+                    {(rating as any).muscleSymmetry && (
+                      <View style={styles.ratingItem}>
+                        <Text style={styles.ratingLabel}>Muscle Symmetry</Text>
+                        <Text style={styles.ratingValue}>{(rating as any).muscleSymmetry}/10</Text>
+                      </View>
+                    )}
                   </View>
                   <View style={styles.overallRating}>
                     <Text style={styles.overallLabel}>Overall Score</Text>
@@ -261,6 +283,23 @@ Return your response in the following JSON format:
                   </View>
                   {rating.analysis && (
                     <Text style={styles.analysisText}>{rating.analysis}</Text>
+                  )}
+                  {recommendations.length > 0 && (
+                    <View style={styles.recommendationsContainer}>
+                      <View style={styles.recommendationsHeader}>
+                        <Sparkles size={18} color={Colors.light.primary} />
+                        <Text style={styles.recommendationsTitle}>Recommended Peptides</Text>
+                      </View>
+                      {recommendations.map((peptideName, index) => {
+                        const peptide = PEPTIDES.find(p => p.name === peptideName);
+                        return peptide ? (
+                          <View key={index} style={styles.recommendationItem}>
+                            <Text style={styles.recommendationName}>{peptide.name}</Text>
+                            <Text style={styles.recommendationDesc}>{peptide.shortDescription}</Text>
+                          </View>
+                        ) : null;
+                      })}
+                    </View>
                   )}
                 </View>
               )}
@@ -690,5 +729,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.light.card,
+  },
+  recommendationsContainer: {
+    backgroundColor: Colors.light.card,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  recommendationsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  recommendationsTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  recommendationItem: {
+    backgroundColor: Colors.light.background,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  recommendationName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  recommendationDesc: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    lineHeight: 16,
   },
 });

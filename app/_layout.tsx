@@ -20,11 +20,12 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading || hasNavigated) return;
 
-    const inOnboarding = segments[0] === 'onboarding';
+    const firstSegment = segments[0] as string;
+    const inOnboarding = firstSegment === 'onboarding' || firstSegment === 'onboarding-professional' || firstSegment === 'role-selection';
 
     if (!user.hasCompletedOnboarding && !inOnboarding) {
       setHasNavigated(true);
-      router.replace('/onboarding');
+      router.replace('/role-selection' as any);
     } else if (user.hasCompletedOnboarding && inOnboarding) {
       setHasNavigated(true);
       router.replace('/(tabs)');
@@ -41,8 +42,11 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="onboarding-professional" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="role-selection" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="peptide/[id]" options={{ title: "Peptide Details" }} />
       <Stack.Screen name="camera" options={{ headerShown: false, presentation: "fullScreenModal" }} />
+      <Stack.Screen name="settings" options={{ title: "Settings" }} />
     </Stack>
   );
 }

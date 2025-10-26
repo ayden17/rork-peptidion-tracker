@@ -27,6 +27,13 @@ export interface UserProfile {
   wantsTracking?: boolean;
   wantsCoaching?: boolean;
   openAIApiKey?: string;
+  calendlyLink?: string;
+  specialty?: string;
+  bio?: string;
+  hourlyRate?: number;
+  instagramHandle?: string;
+  twitterHandle?: string;
+  linkedinHandle?: string;
 }
 
 export interface Peptide {
